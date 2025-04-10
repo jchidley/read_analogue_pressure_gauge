@@ -1,0 +1,20 @@
+# Gauge Detector Configuration
+# This file contains settings for the gauge needle detector
+
+[gauge]
+# Gauge circle parameters
+min_radius = 700     # Minimum radius to detect (pixels)
+max_radius = 900     # Maximum radius to detect (pixels)
+threshold = 1.0      # Movement threshold in degrees
+
+[needle]
+# Needle characteristics
+reading_length = 500     # Expected length of reading side (pixels)
+non_reading_length = 300 # Expected length of non-reading side (pixels)
+reading_width = 10       # Expected width of thin reading end (pixels)
+non_reading_width = 100  # Expected width of thick non-reading end (pixels)
+
+[debug]
+# Debug settings
+enabled = false         # Enable debug output
+output_dir = "debug"    # Directory for debug images
