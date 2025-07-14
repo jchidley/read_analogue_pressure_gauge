@@ -1,8 +1,14 @@
-# Gauge Image Processing System Specification
+# Gauge Image Processing System
 
 ## System Overview
 
-The Gauge Image Processing System is designed to automatically detect and measure the angle of gauge needles in images. The system processes images of analog gauges, detects circular gauge faces, identifies needle positions, and measures angles. It stores processing results in a SQLite database and provides time-series plotting capabilities with time-based filtering and averaging options. The system also converts angle readings to pressure units (PSI/BAR) for pressure gauge monitoring. This functionality is particularly useful for monitoring gauge readings over time without manual intervention.
+The Gauge Image Processing System is designed to automatically detect and measure the angle of gauge needles in images. The system processes images of analog gauges, detects circular gauge faces, identifies needle positions, and measures angles. It stores processing results in a SQLite database and provides time-series plotting capabilities with time-based filtering and averaging options. The system also converts angle readings to pressure units (PSI/BAR) for pressure gauge monitoring.
+
+The system consists of two main parts:
+1. **Image Capture** - Runs on a Raspberry Pi to capture gauge images every 20 minutes
+2. **Image Processing** - Analyzes captured images to extract gauge readings
+
+Both components can run on the same Raspberry Pi or separately (capture on Pi, processing on a more powerful machine).
 
 ## Core Components
 
@@ -286,7 +292,235 @@ The system uses two tables:
 
 ## Dependencies
 
+### Python Dependencies
+Scripts now use inline script metadata for dependency management with `uv`:
 - OpenCV (Python bindings)
 - SQLite3
-- Matplotlib (for plotting)
+- Matplotlib (for plotting)  
 - TOML (for configuration file parsing)
+- numpy
+
+### System Dependencies (Raspberry Pi)
+- `pigpiod` - For GPIO control (LED lighting)
+- `rpicam-jpeg` - For camera capture (part of libcamera)
+- `uv` - For Python dependency management
+- `sqlite3` - For database queries in cleanup scripts
+
+## Raspberry Pi Deployment
+
+This section describes how to deploy the complete system on a Raspberry Pi for automated gauge monitoring.
+
+### Prerequisites
+
+1. **Install uv on the Raspberry Pi:**
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   source ~/.bashrc  # or restart shell
+   ```
+
+2. **Ensure pigpiod is installed:**
+   ```bash
+   sudo apt-get update
+   sudo apt-get install pigpio python3-pigpio
+   ```
+
+3. **Ensure camera tools are installed:**
+   ```bash
+   # For Raspberry Pi OS with libcamera
+   sudo apt-get install libcamera-apps
+   ```
+
+4. **Install sqlite3 for database operations:**
+   ```bash
+   sudo apt-get update
+   sudo apt-get install -y sqlite3
+   ```
+
+### SSH Key Setup
+
+To enable passwordless SSH access from your local machine to the Raspberry Pi:
+
+1. **Check if you have an SSH key on your local machine:**
+   ```bash
+   ls ~/.ssh/id_*.pub
+   ```
+
+2. **If no key exists, generate one:**
+   ```bash
+   ssh-keygen -t ed25519 -C "your_email@example.com"
+   ```
+
+3. **Copy your public key to the Raspberry Pi:**
+   ```bash
+   # Method 1: Using ssh-copy-id (easiest)
+   ssh-copy-id jack@pi4light.local
+   
+   # Method 2: Manual copy
+   # First, display your public key:
+   cat ~/.ssh/id_ed25519.pub
+   
+   # Then SSH to the Pi and add it to authorized_keys:
+   ssh jack@pi4light.local
+   echo "YOUR_PUBLIC_KEY_HERE" >> ~/.ssh/authorized_keys
+   chmod 600 ~/.ssh/authorized_keys
+   ```
+
+### Deployment Steps
+
+1. **Clone or copy this repository to your local machine**
+
+2. **Deploy the capture service:**
+   ```bash
+   # Copy capture script to Pi
+   scp capture_images.sh jack@pi4light:~/
+   
+   # The capture service (dial_capture.service) should already be installed
+   # To check its status:
+   ssh jack@pi4light "sudo systemctl status dial_capture.service"
+   
+   # To update the capture script:
+   ssh jack@pi4light "sudo systemctl restart dial_capture.service"
+   ```
+
+3. **Deploy the processing service:**
+   ```bash
+   # Copy all required files
+   scp continuous_gauge_processor.sh gauge_processor.service install_gauge_processor_service.sh jack@pi4light:~/
+   scp gauge_cli.py gauge_lib.py gauge_config.py filter_large_angles.py gauge_config.toml jack@pi4light:~/
+   
+   # Install the service
+   ssh jack@pi4light "sudo bash install_gauge_processor_service.sh"
+   ```
+
+### Service Management
+
+Both services run continuously via systemd:
+
+#### Capture Service (dial_capture.service)
+- Captures images at 00, 20, and 40 minutes past each hour
+- Controls LED lighting via GPIO for consistent illumination
+- Saves images to `/home/jack/dial_images/`
+
+```bash
+# View status
+sudo systemctl status dial_capture.service
+
+# View logs
+sudo journalctl -u dial_capture.service -f
+
+# Restart service
+sudo systemctl restart dial_capture.service
+```
+
+#### Processing Service (gauge_processor.service)
+- Checks for new images every 5 minutes
+- Processes images to extract gauge readings
+- Deletes successfully processed images to save space
+- Maintains failed images for troubleshooting
+
+```bash
+# View status
+sudo systemctl status gauge_processor.service
+
+# View logs
+sudo journalctl -u gauge_processor.service -f
+
+# Restart service
+sudo systemctl restart gauge_processor.service
+```
+
+### File Locations on Raspberry Pi
+
+- **Images**: `/home/jack/dial_images/`
+- **Database**: `/home/jack/gauge_data.db`
+- **Plots**: `/home/jack/gauge_plots.png`
+- **Scripts**: `/home/jack/`
+- **Service files**: `/etc/systemd/system/`
+
+### Processing Images Locally (Alternative)
+
+If you prefer to process images on a more powerful machine:
+
+1. **Windows (PowerShell):**
+   ```powershell
+   # Use read_it.ps1 to copy images and process
+   .\read_it.ps1
+   ```
+
+2. **Linux/Mac:**
+   ```bash
+   # Copy images from Pi
+   scp jack@pi4light:./dial_images/*.jpg ./dial_images/
+   
+   # Process locally
+   uv run gauge_cli.py --plot --pressure-unit bar --average --all-time
+   uv run filter_large_angles.py --mark-as-failures
+   uv run gauge_cli.py --plot --pressure-unit bar --average --all-time
+   ```
+
+### Monitoring and Verification
+
+After deployment, you can monitor the system's operation:
+
+1. **Check processing progress:**
+   ```bash
+   # View service status with CPU usage
+   ssh jack@pi4light "sudo systemctl status gauge_processor.service --no-pager"
+   
+   # Watch live logs
+   ssh jack@pi4light "sudo journalctl -u gauge_processor.service -f"
+   ```
+
+2. **Verify database entries:**
+   ```bash
+   # Check processed images
+   ssh jack@pi4light "sqlite3 gauge_data.db 'SELECT image_name, angle, pressure_bar FROM gauge_results ORDER BY timestamp DESC LIMIT 5;'"
+   
+   # Count total records
+   ssh jack@pi4light "sqlite3 gauge_data.db 'SELECT COUNT(*) FROM gauge_results;'"
+   ```
+
+3. **Monitor performance:**
+   - Initial image processing takes 10-20 minutes on a Raspberry Pi
+   - The processor service uses significant CPU (up to 300%+ on multi-core)
+   - Check for completion messages in logs: "Successfully processed: X"
+
+### Troubleshooting
+
+1. **Check if services are running:**
+   ```bash
+   ssh jack@pi4light "sudo systemctl status dial_capture.service gauge_processor.service"
+   ```
+
+2. **Check for images:**
+   ```bash
+   ssh jack@pi4light "ls -la dial_images/"
+   ```
+
+3. **Database issues:**
+   ```bash
+   # If sqlite3 is not found, install it:
+   ssh jack@pi4light "sudo apt-get install -y sqlite3"
+   
+   # Check database contents
+   ssh jack@pi4light "sqlite3 gauge_data.db 'SELECT COUNT(*) FROM gauge_results;'"
+   ```
+
+4. **View recent captures:**
+   ```bash
+   ssh jack@pi4light "ls -lt dial_images/ | head -10"
+   ```
+
+5. **Check disk space:**
+   ```bash
+   ssh jack@pi4light "df -h /home/jack"
+   ```
+
+6. **If processing seems stuck:**
+   ```bash
+   # Check if the process is actually running
+   ssh jack@pi4light "ps aux | grep gauge_cli"
+   
+   # Restart the service if needed
+   ssh jack@pi4light "sudo systemctl restart gauge_processor.service"
+   ```

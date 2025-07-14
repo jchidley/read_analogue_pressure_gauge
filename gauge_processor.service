@@ -1,0 +1,25 @@
+[Unit]
+Description=Continuous Gauge Image Processing Service
+After=network.target
+# Start after capture service to ensure proper ordering
+After=dial_capture.service
+
+[Service]
+Type=simple
+User=jack
+Group=jack
+WorkingDirectory=/home/jack
+ExecStart=/home/jack/continuous_gauge_processor.sh
+Restart=always
+RestartSec=60
+StandardOutput=journal
+StandardError=journal
+
+# Environment for Python/uv
+Environment="PATH=/home/jack/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Don't timeout since this runs continuously
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
