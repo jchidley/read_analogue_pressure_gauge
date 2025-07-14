@@ -130,13 +130,29 @@ Outlier detection:
 For faster processing on a more powerful machine:
 
 ```bash
-# Windows
+# Windows - Process images locally
 .\read_it.ps1
+
+# Windows - Sync database from Pi and view combined data
+.\sync_from_pi.ps1
+
+# Windows - Quick view of Pi's current plot
+.\view_plot_from_pi.ps1
 
 # Linux/Mac
 scp jack@pi4light:./dial_images/*.jpg ./dial_images/
 uv run gauge_cli.py --plot --pressure-unit bar --average --all-time
 ```
+
+### Database Syncing
+
+The `sync_from_pi.ps1` script:
+- Downloads new readings from the Pi's database
+- Merges with your local database (no duplicates)
+- Regenerates plots with all historical data
+- Opens the updated plot automatically
+
+This allows you to maintain a complete historical record locally while the Pi continues to delete processed images to save space.
 
 ## File Locations
 
@@ -188,4 +204,8 @@ ssh jack@pi4light "sudo apt-get install -y sqlite3"
 - `gauge_config.py` - Configuration loader
 - `gauge_config.toml` - User settings
 - `filter_large_angles.py` - Outlier detection
+- `sync_database_from_pi.py` - Database synchronization
+- `sync_from_pi.ps1` - Windows script to sync and view data
+- `view_plot_from_pi.ps1` - Quick plot viewing
+- `read_it.ps1` - Local image processing
 - Service files and installation scripts
