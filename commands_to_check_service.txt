@@ -1,0 +1,25 @@
+# Commands to run on the Raspberry Pi to check the service configuration
+
+# View the service file contents
+sudo cat /etc/systemd/system/dial_capture.service
+
+# Check the service status with more details
+sudo systemctl status dial_capture.service -l
+
+# Check service logs
+sudo journalctl -u dial_capture.service -n 50
+
+# Check if service is enabled to start at boot
+sudo systemctl is-enabled dial_capture.service
+
+# To restart the service after updating capture_images.sh:
+# sudo systemctl restart dial_capture.service
+
+# To stop the service temporarily:
+# sudo systemctl stop dial_capture.service
+
+# To start the service:
+# sudo systemctl start dial_capture.service
+
+# To reload systemd after editing the service file:
+# sudo systemctl daemon-reload
