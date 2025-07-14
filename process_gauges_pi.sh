@@ -7,7 +7,7 @@ cd /home/jack
 
 # Process gauge images with plotting, using BAR units and averaging
 echo "Processing gauge images (first pass)..."
-uv run gauge_cli.py --dir dial_images --plot --pressure-unit bar --average --all-time
+uv run gauge_cli.py --dir dial_images --plot --pressure-unit bar --all-time
 
 # Filter out large angles and mark as failures
 echo "Filtering large angles..."
@@ -15,7 +15,7 @@ uv run filter_large_angles.py --dir dial_images --mark-as-failures
 
 # Re-process to update plots after filtering
 echo "Processing gauge images (second pass after filtering)..."
-uv run gauge_cli.py --dir dial_images --plot --pressure-unit bar --average --all-time
+uv run gauge_cli.py --dir dial_images --plot --pressure-unit bar --all-time
 
 echo "Processing complete. Plot saved as gauge_plots.png"
 

@@ -18,7 +18,7 @@ process_new_images() {
         
         # Process gauge images with plotting, using BAR units and averaging
         echo "$(date): Processing gauge images..."
-        uv run gauge_cli.py --dir dial_images --plot --pressure-unit bar --average --all-time
+        uv run gauge_cli.py --dir dial_images --plot --pressure-unit bar --all-time
         
         # Filter out large angles and mark as failures
         echo "$(date): Filtering large angles..."
@@ -26,7 +26,7 @@ process_new_images() {
         
         # Re-process to update plots after filtering
         echo "$(date): Re-processing after filtering..."
-        uv run gauge_cli.py --dir dial_images --plot --pressure-unit bar --average --all-time
+        uv run gauge_cli.py --dir dial_images --plot --pressure-unit bar --all-time
         
         # Delete only successfully processed images
         echo "$(date): Cleaning up successfully processed images..."

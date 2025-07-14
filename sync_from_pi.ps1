@@ -5,7 +5,7 @@ uv run sync_database_from_pi.py
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`nRegenerating plots with combined data..." -ForegroundColor Green
-    uv run gauge_cli.py --plot --pressure-unit bar --average --all-time
+    uv run gauge_cli.py --plot --pressure-unit bar --all-time
     
     Write-Host "`nOpening plot..." -ForegroundColor Green
     lightningview.exe .\gauge_plots.png

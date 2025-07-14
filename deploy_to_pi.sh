@@ -23,6 +23,7 @@ scp -q capture_images.sh \
     gauge_cli.py \
     gauge_lib.py \
     gauge_config.py \
+    gauge_plot.py \
     filter_large_angles.py \
     gauge_config.toml \
     $PI_HOST:~/
