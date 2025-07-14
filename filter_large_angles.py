@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# /// script
+# dependencies = []
+# requires-python = ">=3.12"
+# ///
 """Simple utility to find gauge records with angles > threshold and mark them as detection failures"""
 
 import sqlite3

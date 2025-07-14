@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# /// script
+# dependencies = [
+#   "opencv-python",
+#   "numpy",
+#   "toml",
+#   "matplotlib",
+# ]
+# requires-python = ">=3.12"
+# ///
 """
 Command-line tool for gauge image processing using SQLite for storage
 """

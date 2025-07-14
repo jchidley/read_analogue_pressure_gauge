@@ -242,3 +242,51 @@ Potential areas for enhancement:
 - API for integration with other systems
 - Customizable pressure conversion parameters
 - Support for additional pressure units
+
+## Implementation Notes
+
+- The system is implemented in Python for flexibility and ease of development
+- OpenCV is used for image processing operations
+- SQLite is used for persistent storage
+- The code has been simplified by removing debug image generation functionality
+  - This was done to reduce complexity and dependencies
+  - Future LLMs should not attempt to reimplement this feature
+  - Debug information is still available through console output
+
+## Usage
+
+```bash
+# Process images in the default directory
+python gauge_cli.py
+
+# Process images in a specific directory
+python gauge_cli.py --dir /path/to/images
+
+# Force reprocessing of all images
+python gauge_cli.py --force
+
+# Enable debug mode
+python gauge_cli.py --debug
+```
+
+## Configuration
+
+The system uses default parameters for:
+- Circle detection (min/max radius, Hough transform parameters)
+- Line detection (Canny edge detection, Hough lines)
+- Pressure conversion (angle to PSI/BAR)
+
+These can be modified in the code if needed.
+
+## Database Schema
+
+The system uses two tables:
+1. `gauge_results` - Stores successful detections
+2. `detection_failures` - Tracks failed detections
+
+## Dependencies
+
+- OpenCV (Python bindings)
+- SQLite3
+- Matplotlib (for plotting)
+- TOML (for configuration file parsing)
